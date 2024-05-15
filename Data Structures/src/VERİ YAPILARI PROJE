@@ -1,0 +1,172 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+using namespace std;
+
+struct Deg{
+    int Plaka;
+    string sehirAdi;
+    Deg* left;
+    Deg* right;
+};
+
+Deg* insertNode(Deg* root, int PlakaKodu, const string& sehirAdi) {
+    if (root == nullptr) {
+        Deg* newNode = new Deg;
+        newNode->Plaka = PlakaKodu;
+        newNode->sehirAdi = sehirAdi;
+        newNode->left = nullptr;
+        newNode->right = nullptr;
+        return newNode;
+    }
+    if (PlakaKodu < root->Plaka)
+        root->left = insertNode(root->left, PlakaKodu, sehirAdi);
+    else if (PlakaKodu > root->Plaka)
+        root->right = insertNode(root->right, PlakaKodu, sehirAdi);
+    return root;
+}
+
+Deg* buildBinaryTree(const string& fileName) {
+    Deg* root = nullptr;
+    ifstream inputFile(fileName);
+
+    if (inputFile.is_open()) {
+        int Plaka;
+        string sehirAdi;
+        while (inputFile >> Plaka >> sehirAdi) {
+            root = insertNode(root, Plaka, sehirAdi);
+        }
+        inputFile.close();
+    }
+    return root;
+}
+
+void printTree(Deg* root) {
+    if (root == nullptr)
+        return;
+
+    cout << "Plaka Kodu: " << root->Plaka << ", Şehir Adı: " << root->sehirAdi << endl;
+    printTree(root->left);
+    printTree(root->right);
+}
+
+int getMaxDepth(Deg* root) {
+    if (root == nullptr)
+return 0;
+    int leftDepth = getMaxDepth(root->left);
+    int rightDepth = getMaxDepth(root->right);
+    return max(leftDepth, rightDepth) + 1;
+}
+
+int getBalanceFactor(Deg* root) {
+    if (root == nullptr)
+        return 0;
+
+    int leftDepth = getMaxDepth(root->left);
+    int rightDepth = getMaxDepth(root->right);
+
+    return leftDepth - rightDepth;
+}
+
+Deg* searchNode(Deg* root, int PlakaKodu) {
+    if (root == nullptr || root->Plaka == PlakaKodu)
+        return root;
+
+    if (PlakaKodu < root->Plaka)
+        return searchNode(root->left, PlakaKodu);
+    else
+        return searchNode(root->right, PlakaKodu);
+}
+
+int getLevel(Deg* root, int PlakaKodu, int level) {
+    if (root == nullptr)
+        return -1;
+
+    if (root->Plaka == PlakaKodu)
+        return level;
+
+    int leftLevel = getLevel(root->left, PlakaKodu, level + 1);
+    int rightLevel = getLevel(root->right, PlakaKodu, level + 1);
+
+    if (leftLevel != -1)
+        return leftLevel;
+
+    return rightLevel;
+}
+
+void printNodeDetails(Deg* root, int PlakaKod1, int PlakaKod2) {
+    Deg* node1 = searchNode(root, PlakaKod1);
+    Deg* node2 = searchNode(root, PlakaKod2);
+
+    if (node1 != nullptr && node2 != nullptr) {
+        cout << "Plaka Kodu: " << node1->Plaka << ", Şehir Adı: " << node1->sehirAdi << ", Düzey Farkı: " << abs(getLevel(root, PlakaKod1, 0) - getLevel(root, PlakaKod2, 0)) << endl;
+        cout << "Plaka Kodu: " << node2->Plaka << ", Şehir Adı: " << node2->sehirAdi << ", Düzey Farkı: " << abs(getLevel(root, PlakaKod2, 0) - getLevel(root, PlakaKod1, 0)) << endl;
+    }
+    else {
+        cout << "Bir veya her iki plaka kodu bulunamadı." << endl;
+    }
+}
+
+void preorderTraversal(Deg* root) {
+    if (root == nullptr)
+        return;
+
+    cout << root->Plaka << " " << root->sehirAdi << endl;
+    preorderTraversal(root->left);
+    preorderTraversal(root->right);
+}
+
+void inorderTraversal(Deg* root) {
+    if (root == nullptr)
+        return;
+
+    inorderTraversal(root->left);
+    cout << root->Plaka<< " " << root->sehirAdi << endl;
+    inorderTraversal(root->right);
+}
+
+void postorderTraversal(Deg* root) {
+    if (root == nullptr)
+        return;
+
+    postorderTraversal(root->left);
+    postorderTraversal(root->right);
+    cout << root->Plaka << " " << root->sehirAdi << endl;
+}
+
+int main() {
+    Deg * root = buildBinaryTree("sehir_plaka_kodlari.txt");
+
+    if (root == nullptr) {
+        cout << "Dosya bulunamadı veya okunurken bir hata oluştu." << endl;
+        return 0;
+    }
+
+    cout << "İkili Ağaç Görüntüsü:" << endl;
+    printTree(root);
+
+    int depth = getMaxDepth(root);
+    cout << "Ağacın Derinliği: " << depth << endl;
+
+    int balanceFactor = getBalanceFactor(root);
+    cout << "Ağacın Dengeli Mi?: " << (balanceFactor <= 1 && balanceFactor >= -1 ? "Evet" : "Hayır") << endl;
+
+    int PlakaKod1, PlakaKod2;
+    cout << "İki plaka kodu girin: ";
+    cin >> PlakaKod1 >> PlakaKod2;
+
+    cout << "Plaka Kodu ve Şehir İsimleri:" << endl;
+    printNodeDetails(root, PlakaKod1, PlakaKod2);
+
+    cout << "Preorder Sıralama:" << endl;
+    preorderTraversal(root);
+
+    cout << "Inorder Sıralama:" << endl;
+    inorderTraversal(root);
+
+    cout << "Postorder Sıralama:" << endl;
+    postorderTraversal(root);
+
+    return 0;
+}
